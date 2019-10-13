@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset=utf-8 />
+    <title>Power Plants!</title>
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+
+    <script src="http://cdn.leafletjs.com/leaflet/v1.4.0/leaflet.js"></script>
+
+    <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet/v1.4.0/leaflet.css" />
+    <link href='http://fonts.googleapis.com/css?family=Lato' rel='stylesheet' type='text/css'>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: whitesmoke;
+            font-family: Lato, sans-serif;
+            color: #0D0000;
+        }
+        header {
+            padding: 6px 10%;
+        }
+        h1 {
+            display: inline-block;
+            margin-right: 20px;
+            color: #001323;
+        }
+        h2 {
+            display: inline-block;
+            color: #001323;
+        }
+        #map {
+            width: 80%;
+            height: 540px;
+            margin: 10px auto;
+        }
+        footer {
+            padding: 6px 10%;
+            width: 80%;
+        }
+        p {
+            font-size: 1em;
+            color: #001323;
+        }
+        
+        .hydro {
+            color: #4669e7;
+        }
+        .coal {
+            color: #b46d00;
+        }
+        .petro {
+            color: #81196d;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>Power Plants in the United States</h1>
+        <h2>I Have the Power!</h2>
+
+    </header>
+
+    <div id='map'></div>
+
+    <footer>
+        <p>Bradley Gardener</p>
+        <p>The above map provides the locations and names of each hydro, coal, and petroleum power plant in the United States. The size of the point corresponds with the energy in megawatts that the plant produces.</p>
+    </footer>
+
+    <script src="power-plants.js"></script>
+    <script>
+
+       var map = L.map('map', {
+          center: [36,-94],
+          zoom: 4,
+      });
+      
+      var tiles = L.tileLayer('http://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png', {
+          attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="http://cartodb.com/attributions">CartoDB</a>',
+          subdomains: 'abcd',
+          maxZoom: 19
+      });  
+      
+      tiles.addTo(map);
+   
+        plants.features.sort(function(a, b) {
+            return b.properties.capacity_mw - a.properties.capacity_mw;
+        });
+        
+     var coalLayer = L.geoJson(plants, {
+            pointToLayer: function(feature,latlng) {
+                return L.circleMarker(latlng, { 
+                color: '#2B1303',
+                weight: 1,
+                fillColor: '#b46d00',
+                fillOpacity: .7,
+                radius: getRadius(feature.properties.capacity_mw)
+                });   
+            },
+            
+            filter: function(feature, layer){
+                if(feature.properties.fuel_source.Coal){
+            return feature;
+        }
+        },
+            
+            onEachFeature: function(feature, layer){
+                                layer.on("mouseover", function(){
+                    layer.setStyle({
+                        fillColor: "yellow"
+                    })
+                });
+                layer.on("mouseout", function(){
+                    layer.setStyle({
+                        fillColor: '#b46d00'
+                    })
+                }); 
+                layer.on("click", function(){
+                    layer.bindPopup("<b><div class='"+coalColor+"'>Plant Name: </b>"+feature.properties.plant_name).openPopup();
+                });
+            }
+        }).addTo(map);
+        
+    var petroLayer = L.geoJson(plants, {
+            pointToLayer: function(feature,latlng) {
+                return L.circleMarker(latlng, { 
+                color: '#190138',
+                weight: 1,
+                fillColor: '#81196d',
+                fillOpacity: .7,
+                radius: getRadius(feature.properties.capacity_mw)
+                });   
+            },
+            
+            filter: function(feature, layer){
+                if(feature.properties.fuel_source.Petroleum){
+            return feature;
+        }
+        },
+            
+            onEachFeature: function(feature, layer){
+                                layer.on("mouseover", function(){
+                    layer.setStyle({
+                        fillColor: "yellow"
+                    })
+                });
+                layer.on("mouseout", function(){
+                    layer.setStyle({
+                        fillColor: '#81196d'
+                    })
+                }); 
+                layer.on("click", function(){
+                    layer.bindPopup("<b><div class='"+petroColor+"'>Plant Name: </b>"+feature.properties.plant_name).openPopup();
+                });
+            }
+        }).addTo(map);
+        
+     var hydroLayer = L.geoJson(plants, {
+            pointToLayer: function(feature,latlng) {
+                return L.circleMarker(latlng, { 
+                color: '#001f8d',
+                weight: 1,
+                fillColor: '#4669e7',
+                fillOpacity: .7,
+                radius: getRadius(feature.properties.capacity_mw)
+                });   
+            },
+            
+            filter: function(feature, layer){
+                if(feature.properties.fuel_source.Hydro){
+            return feature;
+        }
+        },
+            
+            onEachFeature: function(feature, layer){
+                layer.on("mouseover", function(){
+                    layer.setStyle({
+                        fillColor: "yellow"
+                    })
+                });
+                layer.on("mouseout", function(){
+                    layer.setStyle({
+                        fillColor: '#4669e7'
+                    })
+                });    
+                layer.on("click", function(){
+                    layer.bindPopup("<b><div class='"+hydroColor+"'> Plant Name: </b>"+feature.properties.plant_name).openPopup();
+                });
+            }
+        }).addTo(map);       
+
+     function getRadius(area) {
+         var radius = Math.sqrt(area/Math.PI);
+         return radius * .6;
+     }
+        
+    var hydroColor = "hydro";
+    var coalColor = "coal";
+    var petroColor = "petro";    
+        
+     var sourcesLayers = {
+        "<b style='color: #4669e7'> Hydro<b/>": hydroLayer,
+        "<b style='color: #81196d'> Petroleum<b/>": petroLayer,
+        "<b style='color: #b46d00'> Coal<b/.": coalLayer
+    };    
+    
+        
+     L.control.layers(null, sourcesLayers, { collapsed:false }).addTo(map);   
+        
+
+    </script>
+    
+</body>
+
+</html>
